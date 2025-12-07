@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: soda-interview-postgres
+    environment:
+      POSTGRES_USER:  postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: soda_interview_db
+    ports:
+      - "5435:5432"
+    volumes:
+      - soda_interview_postgres_data:/var/lib/postgresql/data
+    networks:
+      - soda-interview-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:latest
+    container_name: soda-interview-redis
+    ports:
+      - "6382:6379"
+    volumes:
+      - soda_interview_redis_data:/data
+    networks:
+      - soda-interview-network
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  soda_interview_postgres_data:
+  soda_interview_redis_data:
+
+networks:
+  soda-interview-network:
+    driver: bridge

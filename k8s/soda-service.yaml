@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: soda-service
+  namespace: nominomi
+  labels:
+    app: soda-service
+    version: v1
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: soda-service
+  template:
+    metadata:
+      labels:
+        app: soda-service
+        version: v1
+    spec:
+      containers:
+        - name: soda-service
+          image: soda-interview-grpc:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 50055
+              name: grpc
+              protocol: TCP
+          envFrom:
+            - secretRef:
+                name: soda-service-secrets
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+          livenessProbe:
+            exec:
+              command: ["/bin/grpc_health_probe", "-addr=:50055"]
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command: ["/bin/grpc_health_probe", "-addr=:50055"]
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: soda-service
+  namespace: nominomi
+  labels:
+    app: soda-service
+spec:
+  type: ClusterIP
+  selector:
+    app: soda-service
+  ports:
+    - port: 50055
+      targetPort: 50055
+      protocol: TCP
+      name: grpc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: soda-service-nodeport
+  namespace: nominomi
+spec:
+  type: NodePort
+  selector:
+    app: soda-service
+  ports:
+    - port: 50055
+      targetPort: 50055
+      nodePort: 30055
+      protocol: TCP
+      name: grpc

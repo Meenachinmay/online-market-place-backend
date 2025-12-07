@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package soda_finance.v1;
+
+option go_package = "soda-interview/foundation/proto/soda-finance/v1;financev1";
+
+message Wallet {
+  string user_id = 1;
+  int64 soda_points = 2;
+  int64 soda_balance = 3;
+}
+
+message UserRequest {
+  string user_id = 1;
+}
+
+message ConvertRequest {
+  string user_id = 1;
+  // Ideally we specify how many points to convert, or just "convert all possible". 
+  // The requirements say "ConvertPoints(ConvertRequest) returns (Wallet)". 
+  // It implies a trigger. I'll add an amount field just in case, or leave it empty if it's "convert all".
+  // Re-reading requirements: "Threshold: ONLY allowed if soda_points > 1000". 
+  // It doesn't say "convert X points". Usually it's "convert all eligible" or a specific amount.
+  // I'll add `amount_points` to be safe, but make it optional logic-wise.
+  int64 points_to_convert = 2; 
+}
+
+service FinanceService {
+  rpc GetWallet(UserRequest) returns (Wallet);
+  rpc ConvertPoints(ConvertRequest) returns (Wallet);
+}
