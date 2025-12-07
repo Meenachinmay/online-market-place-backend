@@ -1,0 +1,52 @@
+app:
+  name: "soda-interview"
+  environment: "local"
+  version: "1.0.0"
+  debug: true
+
+server:
+  grpc:
+    host: "0.0.0.0"
+    port: 50055
+    max_connection_idle: "5m"
+    max_connection_age: "5m"
+    max_connection_age_grace: "5s"
+    keep_alive_time: "1m"
+    keep_alive_timeout: "20s"
+  timeout:
+    read: "5s"
+    write: "5s"
+    idle: "120s"
+    request: "10s"
+
+database:
+  postgres:
+    host: "localhost"
+    port: 5435
+    user: "postgres"
+    password: "password"
+    name: "soda_interview_db"
+    sslmode: "disable"
+    max_open_conns: 25
+    max_idle_conns: 25
+    conn_max_lifetime: "5m"
+    conn_max_idle_time: "5m"
+    log_level: "error"
+
+logging:
+  level: "debug"
+  format: "json"
+  output: "stdout"
+  include_caller: true
+  include_stacktrace: true
+
+metrics:
+  enabled: true
+  port: 9001
+  path: "/metrics"
+
+tracing:
+  enabled: false
+  provider: "jaeger"
+  endpoint: "http://localhost:14268/api/traces"
+  sample_rate: 1.0

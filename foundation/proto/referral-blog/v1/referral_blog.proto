@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package referral_blog.v1;
+
+option go_package = "soda-interview/foundation/proto/referral-blog/v1;referral_blogv1";
+
+message Blog {
+  string id = 1;
+  string author_id = 2;
+  string content = 3;
+  string linked_product_id = 4;
+}
+
+message CreateBlogRequest {
+  string author_id = 1;
+  string content = 2;
+  string product_id = 3;
+}
+
+message BlogRequest {
+  string id = 1;
+}
+
+message BlogList {
+  repeated Blog blogs = 1;
+}
+
+message Empty {}
+
+service BlogService {
+  rpc CreateBlog(CreateBlogRequest) returns (Blog);
+  rpc ListBlogs(Empty) returns (BlogList);
+  rpc GetBlog(BlogRequest) returns (Blog);
+}
