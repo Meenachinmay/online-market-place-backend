@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/google/uuid"
 	"soda-interview/business/data/stores/db"
 	"soda-interview/foundation/logger"
 )
@@ -22,6 +23,14 @@ type Product struct {
 	AuthorRewardPoints int32
 }
 
+type NewProduct struct {
+	Name               string
+	Description        string
+	Price              int64
+	BuyerRewardPoints  int32
+	AuthorRewardPoints int32
+}
+
 type Service struct {
 	log *logger.Logger
 	store Storer
@@ -32,6 +41,24 @@ func NewService(log *logger.Logger, store Storer) *Service {
 		log: log,
 		store: store,
 	}
+}
+
+func (s *Service) Create(ctx context.Context, np NewProduct) (Product, error) {
+	id := uuid.NewString()
+	
+	p, err := s.store.CreateProduct(ctx, db.CreateProductParams{
+		ID:                 id,
+		Name:               np.Name,
+		Description:        np.Description,
+		Price:              np.Price,
+		BuyerRewardPoints:  np.BuyerRewardPoints,
+		AuthorRewardPoints: np.AuthorRewardPoints,
+	})
+	if err != nil {
+		return Product{}, fmt.Errorf("creating product: %w", err)
+	}
+	
+	return toProduct(p), nil
 }
 
 func (s *Service) GetProduct(ctx context.Context, id string) (Product, error) {

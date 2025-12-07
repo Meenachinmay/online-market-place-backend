@@ -4,6 +4,9 @@ SELECT * FROM products WHERE id = $1;
 -- name: ListProducts :many
 SELECT * FROM products;
 
+-- name: CreateProduct :one
+INSERT INTO products (id, name, description, price, buyer_reward_points, author_reward_points) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *;
+
 -- name: CreateBlog :one
 INSERT INTO blogs (id, author_id, content, product_id) VALUES ($1, $2, $3, $4) RETURNING *;
 
@@ -18,6 +21,9 @@ INSERT INTO orders (id, buyer_id, product_id, blog_id, amount, status, created_a
 
 -- name: CountOrdersByBuyer :one
 SELECT COUNT(*) FROM orders WHERE buyer_id = $1;
+
+-- name: CountOrdersByBuyerAndProduct :one
+SELECT COUNT(*) FROM orders WHERE buyer_id = $1 AND product_id = $2;
 
 -- name: GetWallet :one
 SELECT * FROM wallets WHERE user_id = $1;

@@ -4,10 +4,10 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"google.golang.org/grpc"
 
-	grpctransportsoda_finance "soda-interview/app/services/soda-interview-grpc/internal/transport/grpc/soda-finance"
 	grpctransportorder "soda-interview/app/services/soda-interview-grpc/internal/transport/grpc/order"
 	grpctransportproduct "soda-interview/app/services/soda-interview-grpc/internal/transport/grpc/product"
 	grpctransportreferral_blog "soda-interview/app/services/soda-interview-grpc/internal/transport/grpc/referral-blog"
+	grpctransportsoda_finance "soda-interview/app/services/soda-interview-grpc/internal/transport/grpc/soda-finance"
 
 	"soda-interview/business/core/finance"
 	"soda-interview/business/core/order"

@@ -44,3 +44,14 @@ func (s *Store) CountOrdersByBuyer(ctx context.Context, buyerID string) (int64, 
 	}
 	return c, nil
 }
+
+func (s *Store) CountOrdersByBuyerAndProduct(ctx context.Context, buyerID, productID string) (int64, error) {
+	c, err := s.q.CountOrdersByBuyerAndProduct(ctx, db.CountOrdersByBuyerAndProductParams{
+		BuyerID:   buyerID,
+		ProductID: productID,
+	})
+	if err != nil {
+		return 0, fmt.Errorf("counting orders by product: %w", err)
+	}
+	return c, nil
+}

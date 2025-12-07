@@ -46,9 +46,13 @@ func (s *Store) GetWallet(ctx context.Context, userID string) (db.Wallet, error)
 	return w, nil
 }
 
-func (s *Store) CreateWallet(ctx context.Context, userID string) (db.Wallet, error) {
+func (s *Store) GetOrCreateWallet(ctx context.Context, userID string) (db.Wallet, error) {
 	w, err := s.q.CreateWallet(ctx, userID)
 	if err != nil {
+		if err.Error() == "no rows in result set" {
+			// Wallet already exists, retrieve it
+			return s.q.GetWallet(ctx, userID)
+		}
 		return db.Wallet{}, fmt.Errorf("creating wallet: %w", err)
 	}
 	return w, nil

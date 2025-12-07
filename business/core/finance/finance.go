@@ -5,12 +5,13 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"soda-interview/business/data/stores/db"
 	sodafinance "soda-interview/business/data/stores/soda-finance"
 	"soda-interview/foundation/logger"
+
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 var (
@@ -48,7 +49,7 @@ func (s *Service) GetWallet(ctx context.Context, userID string) (Wallet, error) 
 }
 
 func (s *Service) EnsureWalletExists(ctx context.Context, userID string) error {
-	_, err := s.store.CreateWallet(ctx, userID)
+	_, err := s.store.GetOrCreateWallet(ctx, userID)
 	if err != nil {
 		return fmt.Errorf("creating wallet: %w", err)
 	}

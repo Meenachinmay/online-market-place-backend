@@ -1,0 +1,52 @@
+app:
+  name: "soda-interview"
+  environment: "test"
+  version: "1.0.0"
+  debug: true
+
+server:
+  grpc:
+    host: "127.0.0.1"
+    port: 50055
+    max_connection_idle: 60s
+    max_connection_age: 120s
+    max_connection_age_grace: 10s
+    keep_alive_time: 30s
+    keep_alive_timeout: 10s
+  timeout:
+    read: 10s
+    write: 10s
+    idle: 30s
+    request: 10s
+
+database:
+  postgres:
+    host: "localhost"
+    port: 5435
+    user: "postgres"
+    password: "password"
+    name: "soda_interview_db_test"
+    sslmode: "disable"
+    max_open_conns: 5
+    max_idle_conns: 2
+    conn_max_lifetime: 60s
+    conn_max_idle_time: 30s
+    log_level: "debug"
+
+logging:
+  level: "debug"
+  format: "json"
+  output: "stdout"
+  include_caller: true
+  include_stacktrace: true
+
+metrics:
+  enabled: false
+  port: 9091
+  path: "/metrics"
+
+tracing:
+  enabled: false
+  provider: "noop"
+  endpoint: ""
+  sample_rate: 0.0

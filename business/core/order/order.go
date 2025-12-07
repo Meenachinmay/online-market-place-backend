@@ -5,15 +5,16 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"soda-interview/business/data/stores/db"
 	orderstore "soda-interview/business/data/stores/order"
 	productstore "soda-interview/business/data/stores/product"
 	blogstore "soda-interview/business/data/stores/referral-blog"
 	financestore "soda-interview/business/data/stores/soda-finance"
 	"soda-interview/foundation/logger"
+
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Order struct {
@@ -82,7 +83,7 @@ func (s *Service) PlaceOrder(ctx context.Context, req PlaceOrderReq) (Order, err
 		return Order{}, fmt.Errorf("getting blog: %w", err)
 	}
 
-	count, err := qTxOrder.CountOrdersByBuyer(ctx, req.BuyerID)
+	count, err := qTxOrder.CountOrdersByBuyerAndProduct(ctx, req.BuyerID, req.ProductID)
 	if err != nil {
 		return Order{}, fmt.Errorf("counting orders: %w", err)
 	}
@@ -104,55 +105,23 @@ func (s *Service) PlaceOrder(ctx context.Context, req PlaceOrderReq) (Order, err
 		return Order{}, fmt.Errorf("creating order: %w", err)
 	}
 
-	if _, err := qTxFinance.CreateWallet(ctx, req.BuyerID); err != nil {
+	if _, err := qTxFinance.GetOrCreateWallet(ctx, req.BuyerID); err != nil {
 		return Order{}, fmt.Errorf("ensuring buyer wallet: %w", err)
 	}
 
 	if isFirstPurchase {
-		buyerPoints := int64(product.BuyerRewardPoints)
-		if buyerPoints > 0 {
-			if _, err := qTxFinance.AddPoints(ctx, db.AddPointsParams{
-				Amount: buyerPoints,
-				UserID: req.BuyerID,
-			}); err != nil {
-				return Order{}, fmt.Errorf("adding buyer points: %w", err)
-			}
-
-			if _, err := qTxFinance.CreateTransaction(ctx, db.CreateTransactionParams{
-				ID:             uuid.NewString(),
-				UserID:         req.BuyerID,
-				Type:           "EARNED",
-				Amount:         buyerPoints,
-				RelatedOrderID: pgtype.Text{String: orderID, Valid: true},
-			}); err != nil {
-				return Order{}, fmt.Errorf("logging buyer transaction: %w", err)
-			}
+		if err := s.distributeBuyerRewards(ctx, qTxFinance, req.BuyerID, product.BuyerRewardPoints, orderID); err != nil {
+			return Order{}, fmt.Errorf("distributing buyer rewards: %w", err)
 		}
 	}
 
 	authorID := blog.AuthorID
-	if _, err := qTxFinance.CreateWallet(ctx, authorID); err != nil {
+	if _, err := qTxFinance.GetOrCreateWallet(ctx, authorID); err != nil {
 		return Order{}, fmt.Errorf("ensuring author wallet: %w", err)
 	}
 
-	authorPoints := int64(product.AuthorRewardPoints)
-	if authorPoints > 0 {
-		if _, err := qTxFinance.AddPoints(ctx, db.AddPointsParams{
-			Amount: authorPoints,
-			UserID: authorID,
-		}); err != nil {
-			return Order{}, fmt.Errorf("adding author points: %w", err)
-		}
-
-		if _, err := qTxFinance.CreateTransaction(ctx, db.CreateTransactionParams{
-			ID:             uuid.NewString(),
-			UserID:         authorID,
-			Type:           "EARNED",
-			Amount:         authorPoints,
-			RelatedOrderID: pgtype.Text{String: orderID, Valid: true},
-		}); err != nil {
-			return Order{}, fmt.Errorf("logging author transaction: %w", err)
-		}
+	if err := s.distributeAuthorRewards(ctx, qTxFinance, authorID, product.AuthorRewardPoints, orderID); err != nil {
+		return Order{}, fmt.Errorf("distributing author rewards: %w", err)
 	}
 
 	if err := tx.Commit(ctx); err != nil {
@@ -168,4 +137,54 @@ func (s *Service) PlaceOrder(ctx context.Context, req PlaceOrderReq) (Order, err
 		Status:    dbOrder.Status,
 		CreatedAt: dbOrder.CreatedAt.Time.Unix(),
 	}, nil
+}
+
+func (s *Service) distributeBuyerRewards(ctx context.Context, txFinance *financestore.Store, buyerID string, points int32, orderID string) error {
+	amount := int64(points)
+	if amount <= 0 {
+		return nil
+	}
+
+	if _, err := txFinance.AddPoints(ctx, db.AddPointsParams{
+		Amount: amount,
+		UserID: buyerID,
+	}); err != nil {
+		return fmt.Errorf("adding points: %w", err)
+	}
+
+	if _, err := txFinance.CreateTransaction(ctx, db.CreateTransactionParams{
+		ID:             uuid.NewString(),
+		UserID:         buyerID,
+		Type:           "EARNED",
+		Amount:         amount,
+		RelatedOrderID: pgtype.Text{String: orderID, Valid: true},
+	}); err != nil {
+		return fmt.Errorf("logging transaction: %w", err)
+	}
+	return nil
+}
+
+func (s *Service) distributeAuthorRewards(ctx context.Context, txFinance *financestore.Store, authorID string, points int32, orderID string) error {
+	amount := int64(points)
+	if amount <= 0 {
+		return nil
+	}
+
+	if _, err := txFinance.AddPoints(ctx, db.AddPointsParams{
+		Amount: amount,
+		UserID: authorID,
+	}); err != nil {
+		return fmt.Errorf("adding points: %w", err)
+	}
+
+	if _, err := txFinance.CreateTransaction(ctx, db.CreateTransactionParams{
+		ID:             uuid.NewString(),
+		UserID:         authorID,
+		Type:           "EARNED",
+		Amount:         amount,
+		RelatedOrderID: pgtype.Text{String: orderID, Valid: true},
+	}); err != nil {
+		return fmt.Errorf("logging transaction: %w", err)
+	}
+	return nil
 }

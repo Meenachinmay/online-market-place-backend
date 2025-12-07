@@ -75,6 +75,22 @@ func (q *Queries) CountOrdersByBuyer(ctx context.Context, buyerID string) (int64
 	return count, err
 }
 
+const countOrdersByBuyerAndProduct = `-- name: CountOrdersByBuyerAndProduct :one
+SELECT COUNT(*) FROM orders WHERE buyer_id = $1 AND product_id = $2
+`
+
+type CountOrdersByBuyerAndProductParams struct {
+	BuyerID   string `json:"buyer_id"`
+	ProductID string `json:"product_id"`
+}
+
+func (q *Queries) CountOrdersByBuyerAndProduct(ctx context.Context, arg CountOrdersByBuyerAndProductParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countOrdersByBuyerAndProduct, arg.BuyerID, arg.ProductID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createBlog = `-- name: CreateBlog :one
 INSERT INTO blogs (id, author_id, content, product_id) VALUES ($1, $2, $3, $4) RETURNING id, author_id, content, product_id
 `
@@ -136,6 +152,40 @@ func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order
 		&i.Amount,
 		&i.Status,
 		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const createProduct = `-- name: CreateProduct :one
+INSERT INTO products (id, name, description, price, buyer_reward_points, author_reward_points) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, name, description, price, buyer_reward_points, author_reward_points
+`
+
+type CreateProductParams struct {
+	ID                 string `json:"id"`
+	Name               string `json:"name"`
+	Description        string `json:"description"`
+	Price              int64  `json:"price"`
+	BuyerRewardPoints  int32  `json:"buyer_reward_points"`
+	AuthorRewardPoints int32  `json:"author_reward_points"`
+}
+
+func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error) {
+	row := q.db.QueryRow(ctx, createProduct,
+		arg.ID,
+		arg.Name,
+		arg.Description,
+		arg.Price,
+		arg.BuyerRewardPoints,
+		arg.AuthorRewardPoints,
+	)
+	var i Product
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.Price,
+		&i.BuyerRewardPoints,
+		&i.AuthorRewardPoints,
 	)
 	return i, err
 }

@@ -53,3 +53,11 @@ func (s *Store) ListProducts(ctx context.Context) ([]db.Product, error) {
 	}
 	return products, nil
 }
+
+func (s *Store) CreateProduct(ctx context.Context, params db.CreateProductParams) (db.Product, error) {
+	p, err := s.q.CreateProduct(ctx, params)
+	if err != nil {
+		return db.Product{}, fmt.Errorf("creating product: %w", err)
+	}
+	return p, nil
+}
