@@ -1,4 +1,4 @@
-# Soda Interview Service
+# Referral Blog Service
 
 A comprehensive microservices-based backend system built with Go, implementing an e-commerce platform with a referral blog and rewards system. This project demonstrates Clean Architecture, gRPC communication, and transactional integrity using PostgreSQL.
 
