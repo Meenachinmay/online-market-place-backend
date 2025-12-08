@@ -38,7 +38,7 @@ func (s *Store) WithTx(tx pgx.Tx) *Store {
 func (s *Store) GetWallet(ctx context.Context, userID string) (db.Wallet, error) {
 	w, err := s.q.GetWallet(ctx, userID)
 	if err != nil {
-		if err.Error() == "no rows in result set" {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return db.Wallet{}, ErrNotFound
 		}
 		return db.Wallet{}, fmt.Errorf("querying wallet: %w", err)
@@ -49,7 +49,7 @@ func (s *Store) GetWallet(ctx context.Context, userID string) (db.Wallet, error)
 func (s *Store) GetOrCreateWallet(ctx context.Context, userID string) (db.Wallet, error) {
 	w, err := s.q.CreateWallet(ctx, userID)
 	if err != nil {
-		if err.Error() == "no rows in result set" {
+		if errors.Is(err, pgx.ErrNoRows) {
 			// Wallet already exists, retrieve it
 			return s.q.GetWallet(ctx, userID)
 		}
@@ -77,7 +77,7 @@ func (s *Store) AddBalance(ctx context.Context, params db.AddBalanceParams) (db.
 func (s *Store) ConvertPointsToBalance(ctx context.Context, params db.ConvertPointsToBalanceParams) (db.Wallet, error) {
 	w, err := s.q.ConvertPointsToBalance(ctx, params)
 	if err != nil {
-		if err.Error() == "no rows in result set" {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return db.Wallet{}, ErrInsufficientPoints
 		}
 		return db.Wallet{}, fmt.Errorf("converting points: %w", err)
